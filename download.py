@@ -53,20 +53,16 @@ def print_title(title, pattern = "-"):
 
 def get_extension(link):
     extension = os.path.splitext(link)[1][1:]
-    if extension in ['pdf', 'html']:
-        return extension
-    if 'pdf' in extension:
-        return 'pdf'    
-    return 'pdf'    
+    return extension if extension in ['pdf', 'html'] else 'pdf'    
 
 def shorten_title(title):
     m1 = re.search('[[0-9]*]', title)
     m2 = re.search('".*"', title)
     if m1:
-        title = m1.group(0)
+        title = m1[0]
     if m2:
-        title = ' '.join((title, m2.group(0)))   
-    return title[:50] + ' [...]'    
+        title = ' '.join((title, m2[0]))
+    return f'{title[:50]} [...]'    
 
 
 if __name__ == '__main__':
@@ -74,7 +70,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Download all the PDF/HTML links into README.md')
     parser.add_argument('-d', action="store", dest="directory")
     parser.add_argument('--no-html', action="store_true", dest="nohtml", default = False)
-    parser.add_argument('--overwrite', action="store_true", default = False)    
+    parser.add_argument('--overwrite', action="store_true", default = False)
     results = parser.parse_args()
 
     output_directory = 'pdfs' if results.directory is None else results.directory
@@ -109,10 +105,10 @@ if __name__ == '__main__':
                     link = clean_pdf_link(link.attrs['href'])
                     ext = get_extension(link)
                     print(ext)
-                    if not ext in forbidden_extensions:
-                        print(shorten_title(point.text) + ' (' + link + ')')
+                    if ext not in forbidden_extensions:
+                        print(f'{shorten_title(point.text)} ({link})')
                         try:
-                            name = clean_text(point.text.split('[' + ext + ']')[0])
+                            name = clean_text(point.text.split(f'[{ext}]')[0])
                             fullname = '.'.join((name, ext))
                             if not os.path.exists('/'.join((current_directory, fullname)) ):
                                 download_pdf(link, current_directory, '.'.join((name, ext)))
@@ -125,11 +121,11 @@ if __name__ == '__main__':
                                 break
                         except:
                             failures.append(point.text)
-                        
+
         point = point.next_sibling          
 
     print('Done!')
     if failures:
         print('Some downloads have failed:')
         for fail in failures:
-            print('> ' + fail)
+            print(f'> {fail}')
